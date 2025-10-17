@@ -1,0 +1,176 @@
+// App.js (or CalendarComponent.js for a standalone file)
+
+import React, { useState, useMemo } from 'react';
+
+// --- 1. Predefined Events Array ---
+const predefinedEvents = [
+  { date: '2025-10-17', title: 'Code Review', description: 'Review final pull requests for the deployment.' },
+  { date: '2025-10-25', title: 'Team Meeting', description: 'Discuss Q4 objectives and budget.' },
+  { date: '2025-10-05', title: 'Holiday', description: 'Local Day Off.' },
+  { date: '2025-10-09', title: 'Client Demo', description: 'Present the new features to the client.' },
+];
+
+// --- 2. Helper Functions ---
+// Formats a Date object to the 'YYYY-MM-DD' string format for easy comparison
+const formatDate = (date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+// --- 3. Calendar Component (The Core Component) ---
+const InteractiveCalendar = () => {
+  // Use useState to store the selected date string (e.g., '2025-10-17')
+  const [selectedDateStr, setSelectedDateStr] = useState(formatDate(new Date())); // Default to today
+
+  // Get current date context
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  
+  const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay(); // 0 (Sun) - 6 (Sat)
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+  // Filter events based on the selected date
+  const eventsForSelectedDate = useMemo(() => {
+    if (!selectedDateStr) return [];
+    return predefinedEvents.filter(event => event.date === selectedDateStr);
+  }, [selectedDateStr]);
+
+  // Handler for clicking a date cell
+  const handleDateClick = (day) => {
+    const newDate = new Date(currentYear, currentMonth, day);
+    const newDateStr = formatDate(newDate);
+    setSelectedDateStr(newDateStr);
+  };
+
+  // Logic to build the calendar grid cells
+  const calendarDays = [];
+
+  // Add empty filler cells for days before the 1st
+  for (let i = 0; i < firstDayOfMonth; i++) {
+    calendarDays.push(<div key={`empty-${i}`} style={styles.calendarDayEmpty}></div>);
+  }
+
+  // Add the actual days of the month
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dayDate = new Date(currentYear, currentMonth, day);
+    const dayDateStr = formatDate(dayDate);
+    const isSelected = dayDateStr === selectedDateStr;
+
+    calendarDays.push(
+      <div 
+        key={day} 
+        style={{...styles.calendarDay, ...(isSelected ? styles.calendarDaySelected : {})}}
+        onClick={() => handleDateClick(day)}
+      >
+        {day}
+      </div>
+    );
+  }
+
+  return (
+    <div style={styles.container}>
+      <h2>
+        🗓️ {today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+      </h2>
+      
+      {/* Calendar Grid */}
+      <div style={styles.calendarGrid}>
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+          <div key={day} style={styles.calendarDayHeader}>{day}</div>
+        ))}
+        {calendarDays}
+      </div>
+
+      {/* Event Display Details */}
+      <div style={styles.eventDisplayArea}>
+        <h3>Event Details for: {selectedDateStr || '---'}</h3>
+        
+        {selectedDateStr && eventsForSelectedDate.length > 0 ? (
+          eventsForSelectedDate.map((event, index) => (
+            <div key={index} style={styles.eventDetail}>
+              <p style={styles.eventTitle}>📌 {event.title}</p>
+              <p style={styles.eventDescription}>{event.description}</p>
+            </div>
+          ))
+        ) : selectedDateStr ? (
+          <p>No events scheduled for this date.</p>
+        ) : (
+          <p>Click a date on the calendar to see its events.</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// --- 4. Inline CSS Styles ---
+const styles = {
+  container: {
+    maxWidth: '700px',
+    margin: '40px auto',
+    padding: '20px',
+    border: '1px solid #ddd',
+    borderRadius: '10px',
+    fontFamily: 'Arial, sans-serif',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+  },
+  calendarGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(7, 1fr)',
+    gap: '5px',
+    marginBottom: '20px',
+  },
+  calendarDayHeader: {
+    textAlign: 'center',
+    fontWeight: 'bold',
+    padding: '10px 0',
+    backgroundColor: '#f0f0f0',
+    borderRadius: '4px',
+  },
+  calendarDay: {
+    textAlign: 'center',
+    padding: '15px 0',
+    border: '1px solid #eee',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s',
+    borderRadius: '4px',
+  },
+  calendarDaySelected: {
+    backgroundColor: '#007bff',
+    color: 'white',
+    fontWeight: 'bold',
+    border: '1px solid #0056b3',
+  },
+  calendarDayEmpty: {
+    padding: '15px 0',
+    backgroundColor: '#f9f9f9',
+    cursor: 'default',
+  },
+  eventDisplayArea: {
+    marginTop: '30px',
+    padding: '15px',
+    borderTop: '2px solid #007bff',
+    backgroundColor: '#fcfcfc',
+    borderRadius: '4px',
+  },
+  eventDetail: {
+    borderLeft: '4px solid #ffc107',
+    paddingLeft: '15px',
+    margin: '10px 0',
+    backgroundColor: '#fffaf0',
+    borderRadius: '4px',
+  },
+  eventTitle: {
+      fontWeight: 'bold',
+      margin: '5px 0',
+  },
+  eventDescription: {
+      fontSize: '0.9em',
+      color: '#555',
+      margin: '5px 0 10px 0',
+  }
+};
+
+export default InteractiveCalendar;
