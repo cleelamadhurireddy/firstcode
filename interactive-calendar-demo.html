@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Interactive Calendar Demo</title>
+    <!-- React + ReactDOM (UMD builds) and Babel for in-browser JSX transpile (dev/demo only) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+      body { font-family: Arial, Helvetica, sans-serif; background:#f4f6f8; padding:24px }
+      #root { max-width:900px; margin:0 auto }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      // Component code adapted for in-browser demo (no imports/exports)
+      const { useState, useMemo } = React;
+
+      const predefinedEvents = [
+        { date: '2025-10-17', title: 'Code Review', description: 'Review final pull requests for the deployment.' },
+        { date: '2025-10-25', title: 'Team Meeting', description: 'Discuss Q4 objectives and budget.' },
+        { date: '2025-10-05', title: 'Holiday', description: 'Local Day Off.' },
+        { date: '2025-10-09', title: 'Client Demo', description: 'Present the new features to the client.' },
+      ];
+
+      const formatDate = (date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      };
+
+      const InteractiveCalendar = () => {
+        const [selectedDateStr, setSelectedDateStr] = useState(formatDate(new Date()));
+        const today = new Date();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+        const eventsForSelectedDate = useMemo(() => {
+          if (!selectedDateStr) return [];
+          return predefinedEvents.filter(event => event.date === selectedDateStr);
+        }, [selectedDateStr]);
+
+        const handleDateClick = (day) => {
+          const newDate = new Date(currentYear, currentMonth, day);
+          setSelectedDateStr(formatDate(newDate));
+        };
+
+        const calendarDays = [];
+        for (let i = 0; i < firstDayOfMonth; i++) {
+          calendarDays.push(<div key={`empty-${i}`} style={styles.calendarDayEmpty}></div>);
+        }
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dayDate = new Date(currentYear, currentMonth, day);
+          const dayDateStr = formatDate(dayDate);
+          const isSelected = dayDateStr === selectedDateStr;
+          calendarDays.push(
+            <div
+              key={day}
+              style={{...styles.calendarDay, ...(isSelected ? styles.calendarDaySelected : {})}}
+              onClick={() => handleDateClick(day)}
+            >
+              {day}
+            </div>
+          );
+        }
+
+        return (
+          <div style={styles.container}>
+            <h2>🗓️ {today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
+            <div style={styles.calendarGrid}>
+              {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+                <div key={d} style={styles.calendarDayHeader}>{d}</div>
+              ))}
+              {calendarDays}
+            </div>
+
+            <div style={styles.eventDisplayArea}>
+              <h3>Event Details for: {selectedDateStr || '---'}</h3>
+              {selectedDateStr && eventsForSelectedDate.length > 0 ? (
+                eventsForSelectedDate.map((event, i) => (
+                  <div key={i} style={styles.eventDetail}>
+                    <p style={styles.eventTitle}>📌 {event.title}</p>
+                    <p style={styles.eventDescription}>{event.description}</p>
+                  </div>
+                ))
+              ) : selectedDateStr ? (
+                <p>No events scheduled for this date.</p>
+              ) : (
+                <p>Click a date on the calendar to see its events.</p>
+              )}
+            </div>
+          </div>
+        );
+      };
+
+      const styles = {
+        container: { maxWidth: '700px', margin: '24px auto', padding: '20px', border: '1px solid #ddd', borderRadius: '10px', fontFamily: 'Arial, sans-serif', background:'#fff' },
+        calendarGrid: { display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'6px', marginBottom:'18px' },
+        calendarDayHeader: { textAlign:'center', fontWeight:'bold', padding:'10px 0', background:'#f0f0f0', borderRadius:'4px' },
+        calendarDay: { textAlign:'center', padding:'12px 0', border:'1px solid #eee', cursor:'pointer', borderRadius:'4px' },
+        calendarDaySelected: { background:'#007bff', color:'#fff', fontWeight:'bold' },
+        calendarDayEmpty: { padding:'12px 0', background:'#fafafa' },
+        eventDisplayArea: { marginTop:'18px', padding:'12px', borderTop:'2px solid #007bff', background:'#fcfcfc', borderRadius:'4px' },
+        eventDetail: { borderLeft:'4px solid #ffc107', paddingLeft:'12px', margin:'8px 0', background:'#fffaf0', borderRadius:'4px' },
+        eventTitle: { fontWeight:'bold', margin:'4px 0' },
+        eventDescription: { margin:'2px 0', color:'#444' },
+      };
+
+      ReactDOM.createRoot(document.getElementById('root')).render(<InteractiveCalendar />);
+    </script>
+  </body>
+</html>
